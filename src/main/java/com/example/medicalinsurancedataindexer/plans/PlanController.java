@@ -22,7 +22,7 @@ public class PlanController {
         this.planService = new PlanService();
     }
 
-    @GetMapping(path = "/plan/{id}")
+    @GetMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> get(HttpServletResponse response, @PathVariable(value = "id") String id) {
         LOGGER.trace("Getting plan with id: " + id);
 
@@ -30,12 +30,11 @@ public class PlanController {
 
         return  ResponseEntity
                 .status(HttpStatus.OK)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(plan);
 
     }
 
-    @GetMapping(path = "/plan")
+    @GetMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> getAll() {
         LOGGER.trace("Get all plans");
 
@@ -43,11 +42,10 @@ public class PlanController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(plans);
     }
 
-    @PostMapping(path = "/plan")
+    @PostMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> post(HttpServletResponse response, @RequestBody String rawPlan) {
         LOGGER.trace("Creating plan: " + rawPlan);
 
@@ -55,13 +53,12 @@ public class PlanController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new Object() {
                     public final String message = "Plan created";
                 });
     }
 
-    @DeleteMapping(path = "/plan/{id}")
+    @DeleteMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> delete(@PathVariable(value = "id") String id) {
         LOGGER.trace("Deleting plan with id: " + id);
 
@@ -69,7 +66,6 @@ public class PlanController {
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new Object() {
                     public final String message = "Plan deleted";
                 });
