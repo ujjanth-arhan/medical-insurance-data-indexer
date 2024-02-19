@@ -38,8 +38,11 @@ public class RedisHelper {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Set<String> keys = jedis.keys("*");
-            List<String> rawPlans = jedis.mget(keys.toArray(new String[0]));
+            if (keys.isEmpty()) {
+                return new ArrayList<>();
+            }
 
+            List<String> rawPlans = jedis.mget(keys.toArray(new String[0]));
             return rawPlans.stream().map(rawPlan -> {
                 try {
                     return objectMapper.readValue(rawPlan, Object.class);
