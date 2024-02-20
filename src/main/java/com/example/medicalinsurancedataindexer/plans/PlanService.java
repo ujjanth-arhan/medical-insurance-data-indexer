@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 public class PlanService {
-    public String setPlan(String rawPlan) {
+    public String postPlan(String rawPlan) {
         try (InputStream inputStream = getClass().getResourceAsStream("/PlanSchema.json")) {
             JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
             Schema schema = SchemaLoader.load(rawSchema);
@@ -111,5 +111,49 @@ public class PlanService {
 
             throw new RedisException("Error deleting plan from Redis: " + e.getMessage());
         }
+    }
+
+    public String putPlan(String rawPlan) {
+        try (InputStream inputStream = getClass().getResourceAsStream("/PlanSchema.json")) {
+            JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
+            Schema schema = SchemaLoader.load(rawSchema);
+            schema.validate(new JSONObject(rawPlan));
+        } catch (IOException | NullPointerException e) {
+            throw new PlanServiceException("Error loading schema: " + e.getMessage());
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> map;
+        try {
+            map = objectMapper.readValue(rawPlan, new TypeReference<>() {});
+        } catch (JsonMappingException e) {
+            throw new PlanServiceException("Error mapping plan: " + e.getMessage());
+        } catch (IOException e) {
+            throw new PlanServiceException("Error reading plan: " + e.getMessage());
+        }
+
+        String plan;
+        try {
+            String objectId = map.containsKey("objectId") ? map.get("objectId").toString() : null;
+            if (objectId == null) {
+                throw new PlanServiceException("Plan must have an objectId");
+            }
+
+            RedisHelper redisHelper = new RedisHelper();
+            redisHelper.set(objectId, rawPlan);
+            plan = redisHelper.get(objectId);
+        } catch (Exception e) {
+            if (e instanceof PlanNotFoundException) {
+                throw new PlanNotFoundException(e.getMessage());
+            }
+
+            if (e instanceof PlanAlreadyExistsException) {
+                throw new PlanAlreadyExistsException(e.getMessage());
+            }
+
+            throw new RedisException("Error setting plan in Redis: " + e.getMessage());
+        }
+
+        return plan;
     }
 }

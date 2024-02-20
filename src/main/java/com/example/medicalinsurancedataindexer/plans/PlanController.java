@@ -2,7 +2,6 @@ package com.example.medicalinsurancedataindexer.plans;
 
 import com.example.medicalinsurancedataindexer.util.ETagHelper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,7 +23,7 @@ public class PlanController {
     }
 
     @GetMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<?> get(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "id") String id) {
+    ResponseEntity<?> get(HttpServletRequest request, @PathVariable(value = "id") String id) {
         LOGGER.trace("Getting plan with id: " + id);
 
         String plan = planService.getPlan(id);
@@ -56,10 +55,10 @@ public class PlanController {
     }
 
     @PostMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<?> post(HttpServletResponse response, @RequestBody String rawPlan) {
+    ResponseEntity<?> post(@RequestBody String rawPlan) {
         LOGGER.trace("Creating plan: " + rawPlan);
 
-        String plan = planService.setPlan(rawPlan);
+        String plan = planService.postPlan(rawPlan);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -78,6 +77,24 @@ public class PlanController {
                 .body(new Object() {
                     public final String message = "Plan deleted";
                 });
+    }
+
+    /**
+     * Create or replace a plan does not take id as a parameter, it is extracted from the plan itself.
+     * The plan is expected to have an objectId field which would be used for this purpose.
+     * @param rawPlan
+     * @return
+     */
+    @PutMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<?> put(@RequestBody String rawPlan) {
+        LOGGER.trace("Creating/Replacing plan");
+
+        String plan = planService.putPlan(rawPlan);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .eTag(ETagHelper.generateETag(plan))
+                .body(plan);
     }
 
 }
