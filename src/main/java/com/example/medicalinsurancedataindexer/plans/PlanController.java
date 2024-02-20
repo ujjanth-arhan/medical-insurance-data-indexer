@@ -1,8 +1,9 @@
 package com.example.medicalinsurancedataindexer.plans;
 
+import com.example.medicalinsurancedataindexer.util.ETagHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +24,22 @@ public class PlanController {
     }
 
     @GetMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<?> get(HttpServletResponse response, @PathVariable(value = "id") String id) {
+    ResponseEntity<?> get(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "id") String id) {
         LOGGER.trace("Getting plan with id: " + id);
 
         String plan = planService.getPlan(id);
+        if (request.getHeader("If-None-Match") != null && request.getHeader("If-None-Match").equals(ETagHelper.generateETag(plan))) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_MODIFIED)
+                    .eTag(ETagHelper.generateETag(plan))
+                    .body(new Object() {
+                        public final String message = "Not modified";
+                    });
+        }
 
         return  ResponseEntity
                 .status(HttpStatus.OK)
+                .eTag(ETagHelper.generateETag(plan))
                 .body(plan);
 
     }
@@ -49,13 +59,12 @@ public class PlanController {
     ResponseEntity<?> post(HttpServletResponse response, @RequestBody String rawPlan) {
         LOGGER.trace("Creating plan: " + rawPlan);
 
-        planService.setPlan(rawPlan);
+        String plan = planService.setPlan(rawPlan);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(new Object() {
-                    public final String message = "Plan created";
-                });
+                .eTag(ETagHelper.generateETag(plan))
+                .body(plan);
     }
 
     @DeleteMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)

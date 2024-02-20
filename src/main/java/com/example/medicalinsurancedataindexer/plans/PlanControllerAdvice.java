@@ -1,6 +1,5 @@
 package com.example.medicalinsurancedataindexer.plans;
 
-import com.example.medicalinsurancedataindexer.util.RedisException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.everit.json.schema.ValidationException;
 import org.springframework.http.HttpStatus;
@@ -33,22 +32,22 @@ public class PlanControllerAdvice {
     }
 
     @ResponseBody
-    @ExceptionHandler(RedisException.class)
-    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    Object redisExceptionHandler(HttpServletResponse response, RedisException e) {
+    @ExceptionHandler(PlanNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    Object planAvailabilityExceptionHandler(HttpServletResponse response, PlanNotFoundException e) {
         response.setContentType("application/json");
         return new Object() {
-            public final String error = "There was an error processing the plan";
+            public final String error = "Plan not found";
         };
     }
 
     @ResponseBody
-    @ExceptionHandler(PlanAvailabilityException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    Object planAvailabilityExceptionHandler(HttpServletResponse response, PlanAvailabilityException e) {
+    @ExceptionHandler(PlanAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    Object planAlreadyExistsExceptionHandler(HttpServletResponse response, PlanAlreadyExistsException e) {
         response.setContentType("application/json");
         return new Object() {
-            public final String error = "Plan not found";
+            public final String error = "Plan already exists";
         };
     }
 }

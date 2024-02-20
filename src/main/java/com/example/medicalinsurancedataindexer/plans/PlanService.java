@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 public class PlanService {
-    public void setPlan(String rawPlan) {
+    public String setPlan(String rawPlan) {
         try (InputStream inputStream = getClass().getResourceAsStream("/PlanSchema.json")) {
             JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
             Schema schema = SchemaLoader.load(rawSchema);
@@ -39,17 +39,33 @@ public class PlanService {
             throw new PlanServiceException("Error reading plan: " + e.getMessage());
         }
 
-        String objectId = map.containsKey("objectId") ? map.get("objectId").toString() : null;
-        if (objectId == null) {
-            throw new PlanServiceException("Plan must have an objectId");
-        }
-
+        String plan;
         try {
+            String objectId = map.containsKey("objectId") ? map.get("objectId").toString() : null;
+            if (objectId == null) {
+                throw new PlanServiceException("Plan must have an objectId");
+            }
+
             RedisHelper redisHelper = new RedisHelper();
+            if (redisHelper.exist(objectId)) {
+                throw new PlanAlreadyExistsException("Plan already exists");
+            }
+
             redisHelper.set(objectId, rawPlan);
+            plan = redisHelper.get(objectId);
         } catch (Exception e) {
+            if (e instanceof PlanNotFoundException) {
+                throw new PlanNotFoundException(e.getMessage());
+            }
+
+            if (e instanceof PlanAlreadyExistsException) {
+                throw new PlanAlreadyExistsException(e.getMessage());
+            }
+
             throw new RedisException("Error setting plan in Redis: " + e.getMessage());
         }
+
+        return plan;
     }
 
     public String getPlan(String id) {
@@ -60,10 +76,10 @@ public class PlanService {
                 return redisHelper.get(id);
             }
 
-            throw new PlanAvailabilityException("Plan not found");
+            throw new PlanNotFoundException("Plan not found");
         } catch (Exception e) {
-            if (e instanceof PlanAvailabilityException) {
-                throw new PlanAvailabilityException(e.getMessage());
+            if (e instanceof PlanNotFoundException) {
+                throw new PlanNotFoundException(e.getMessage());
             }
 
             throw new RedisException("Error getting plan from Redis: " + e.getMessage());
@@ -87,10 +103,10 @@ public class PlanService {
                 return;
             }
 
-            throw new PlanAvailabilityException("Plan not found");
+            throw new PlanNotFoundException("Plan not found");
         } catch (Exception e) {
-            if (e instanceof PlanAvailabilityException) {
-                throw new PlanAvailabilityException(e.getMessage());
+            if (e instanceof PlanNotFoundException) {
+                throw new PlanNotFoundException(e.getMessage());
             }
 
             throw new RedisException("Error deleting plan from Redis: " + e.getMessage());

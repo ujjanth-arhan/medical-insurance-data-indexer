@@ -16,6 +16,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'commons-codec:commons-codec:1.15'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.github.erosb:everit-json-schema:1.14.4'
     implementation 'redis.clients:jedis'
