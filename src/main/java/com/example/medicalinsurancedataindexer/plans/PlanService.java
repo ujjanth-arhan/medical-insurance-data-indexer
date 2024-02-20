@@ -13,8 +13,10 @@ import org.everit.json.schema.Schema;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -155,5 +157,81 @@ public class PlanService {
         }
 
         return plan;
+    }
+
+    public String patchPlan(String id, String rawPlan) {
+        try (InputStream inputStream = getClass().getResourceAsStream("/PlanSchema.json")) {
+            JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
+            Schema schema = SchemaLoader.load(rawSchema);
+            schema.validate(new JSONObject(rawPlan));
+        } catch (IOException | NullPointerException e) {
+            throw new PlanServiceException("Error loading schema: " + e.getMessage());
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> map;
+        try {
+            map = objectMapper.readValue(rawPlan, new TypeReference<>() {});
+        } catch (JsonMappingException e) {
+            throw new PlanServiceException("Error mapping plan: " + e.getMessage());
+        } catch (IOException e) {
+            throw new PlanServiceException("Error reading plan: " + e.getMessage());
+        }
+
+        try {
+            RedisHelper redisHelper = new RedisHelper();
+            String objectId = map.containsKey("objectId") ? map.get("objectId").toString() : null;
+            if (objectId == null) {
+                throw new PlanServiceException("Plan must have an objectId");
+            }
+
+            if (!redisHelper.exist(objectId)) {
+                throw new PlanNotFoundException("Plan not found");
+            }
+
+            if (!redisHelper.exist(objectId)) {
+                redisHelper.set(objectId, rawPlan);
+                return redisHelper.get(objectId);
+            }
+
+            String sOldPlan = redisHelper.get(objectId);
+            Map<String, Object> oldMap = objectMapper.readValue(sOldPlan, new TypeReference<>() {});
+            for (Entry<String, Object> entry : oldMap.entrySet()) {
+                if (!map.containsKey(entry.getKey())) {
+                    map.put(entry.getKey(), entry.getValue());
+                    continue;
+                }
+
+                if (entry.getValue() instanceof ArrayList) {
+                    List<?> newArray = (List<?>) map.get(entry.getKey());
+                    List<?> oldArray = (List<?>) entry.getValue();
+                    ArrayList<?> newArrayList = (ArrayList<?>)Stream.concat(newArray.stream(), oldArray.stream()).collect(Collectors.toList());
+                    map.put(entry.getKey(), newArrayList);
+                    continue;
+                }
+
+                if (entry.getValue() instanceof LinkedHashMap) {
+                    LinkedHashMap<Object, Object> oldLinkedHashMap = (LinkedHashMap<Object, Object>) entry.getValue();
+                    LinkedHashMap<Object, Object> newLinkedHashMap = (LinkedHashMap<Object, Object>) map.get(entry.getKey());
+                    newLinkedHashMap.putAll(oldLinkedHashMap);
+                    map.put(entry.getKey(), newLinkedHashMap);
+                    continue;
+                }
+            }
+
+            Object resPlan = objectMapper.convertValue(map, Object.class);
+            redisHelper.set(objectId, objectMapper.writeValueAsString(resPlan));
+            return redisHelper.get(objectId);
+        } catch (Exception e) {
+            if (e instanceof PlanNotFoundException) {
+                throw new PlanNotFoundException(e.getMessage());
+            }
+
+            if (e instanceof PlanAlreadyExistsException) {
+                throw new PlanAlreadyExistsException(e.getMessage());
+            }
+
+            throw new RedisException("Error setting plan in Redis: " + e.getMessage());
+        }
     }
 }

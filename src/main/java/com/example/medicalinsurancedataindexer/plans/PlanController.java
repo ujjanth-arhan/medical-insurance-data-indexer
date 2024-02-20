@@ -97,4 +97,16 @@ public class PlanController {
                 .body(plan);
     }
 
+    @PatchMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<?> patch(HttpServletRequest request, @PathVariable(value = "id") String id, @RequestBody String rawPlan) {
+        LOGGER.trace("Patching plan with id: " + id);
+
+        String plan = planService.patchPlan(id, rawPlan);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .eTag(ETagHelper.generateETag(plan))
+                .body(plan);
+    }
+
 }
