@@ -1,5 +1,8 @@
 package com.example.medicalinsurancedataindexer.plans;
 
+import com.example.medicalinsurancedataindexer.security.Authorized;
+import com.example.medicalinsurancedataindexer.security.OAuthGoogle;
+import com.example.medicalinsurancedataindexer.security.OAuthGoogleAspect;
 import com.example.medicalinsurancedataindexer.util.ETagHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.LoggerFactory;
@@ -22,6 +25,7 @@ public class PlanController {
         this.planService = new PlanService();
     }
 
+    @OAuthGoogle
     @GetMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> get(HttpServletRequest request, @PathVariable(value = "id") String id) {
         LOGGER.trace("Getting plan with id: " + id);
@@ -43,6 +47,7 @@ public class PlanController {
 
     }
 
+    @OAuthGoogle
     @GetMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> getAll() {
         LOGGER.trace("Get all plans");
@@ -54,9 +59,14 @@ public class PlanController {
                 .body(plans);
     }
 
+    @OAuthGoogle
     @PostMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<?> post(@RequestBody String rawPlan) {
+    ResponseEntity<?> post(HttpServletRequest request, @RequestBody String rawPlan) {
         LOGGER.trace("Creating plan: " + rawPlan);
+
+//        OAuthGoogleAspect auth = new OAuthGoogleAspect();
+//        auth.validateAccessToken(request.getHeader("Authorization"));
+
 
         String plan = planService.postPlan(rawPlan);
 
@@ -66,6 +76,7 @@ public class PlanController {
                 .body(plan);
     }
 
+    @OAuthGoogle
     @DeleteMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> delete(@PathVariable(value = "id") String id) {
         LOGGER.trace("Deleting plan with id: " + id);
@@ -85,6 +96,7 @@ public class PlanController {
      * @param rawPlan
      * @return
      */
+    @OAuthGoogle
     @PutMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> put(@RequestBody String rawPlan) {
         LOGGER.trace("Creating/Replacing plan");
@@ -97,6 +109,7 @@ public class PlanController {
                 .body(plan);
     }
 
+    @OAuthGoogle
     @PatchMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> patch(HttpServletRequest request, @PathVariable(value = "id") String id, @RequestBody String rawPlan) {
         LOGGER.trace("Patching plan with id: " + id);

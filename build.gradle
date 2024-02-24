@@ -16,6 +16,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.aspectj:aspectjrt:1.9.21.1'
+    implementation 'com.google.api-client:google-api-client:1.32.1'
     implementation 'commons-codec:commons-codec:1.15'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.github.erosb:everit-json-schema:1.14.4'

@@ -1,5 +1,6 @@
 package com.example.medicalinsurancedataindexer.config;
 
+import com.example.medicalinsurancedataindexer.security.AccessTokenException;
 import com.example.medicalinsurancedataindexer.util.RedisException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,16 @@ public class GeneralControllerAdvice {
         response.setContentType("application/json");
         return new Object() {
             public final String error = "There was an error processing the plan";
+        };
+    }
+
+    @ResponseBody
+    @ExceptionHandler(AccessTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Object accessTokenExceptionHandler(HttpServletResponse response, AccessTokenException e) {
+        response.setContentType("application/json");
+        return new Object() {
+            public final String error = "Access token is invalid";
         };
     }
 }
