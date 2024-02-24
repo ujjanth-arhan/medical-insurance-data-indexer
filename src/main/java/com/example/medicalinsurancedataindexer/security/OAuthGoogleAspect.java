@@ -1,8 +1,10 @@
 package com.example.medicalinsurancedataindexer.security;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 
-import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -19,9 +21,20 @@ public class OAuthGoogleAspect {
     @Autowired
     private Environment environment;
 
-    @Before("@annotation(Authorized)")
-    public boolean validateAccessToken(String accessToken) {
+    private HttpServletRequest findHttpServletRequest(Object[] args) {
+        for (Object arg : args) {
+            if (arg instanceof HttpServletRequest) {
+                return (HttpServletRequest) arg;
+            }
+        }
+        return null;
+    }
+
+    @Around("@annotation(oAuthGoogle)")
+    public void validateAccessToken(ProceedingJoinPoint joinPoint, OAuthGoogle oAuthGoogle) {
         try {
+            HttpServletRequest request = findHttpServletRequest(joinPoint.getArgs());
+            String accessToken = request.getHeader("Authorization");
             if (accessToken == null) {
                 throw new AccessTokenException("Access token is required");
             }
@@ -48,6 +61,5 @@ public class OAuthGoogleAspect {
             throw new AccessTokenException("There was an error validating the access token: " + e.getMessage());
         }
 
-        return true;
     }
 }

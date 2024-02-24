@@ -1,8 +1,6 @@
 package com.example.medicalinsurancedataindexer.plans;
 
-import com.example.medicalinsurancedataindexer.security.Authorized;
 import com.example.medicalinsurancedataindexer.security.OAuthGoogle;
-import com.example.medicalinsurancedataindexer.security.OAuthGoogleAspect;
 import com.example.medicalinsurancedataindexer.util.ETagHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.LoggerFactory;
@@ -63,10 +61,6 @@ public class PlanController {
     @PostMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> post(HttpServletRequest request, @RequestBody String rawPlan) {
         LOGGER.trace("Creating plan: " + rawPlan);
-
-//        OAuthGoogleAspect auth = new OAuthGoogleAspect();
-//        auth.validateAccessToken(request.getHeader("Authorization"));
-
 
         String plan = planService.postPlan(rawPlan);
 
