@@ -1,10 +1,13 @@
 package com.example.medicalinsurancedataindexer.security;
 
+import com.example.medicalinsurancedataindexer.plans.PlanController;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -21,6 +24,8 @@ public class OAuthGoogleAspect {
     @Autowired
     private Environment environment;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OAuthGoogleAspect.class);
+
     private HttpServletRequest findHttpServletRequest(Object[] args) {
         for (Object arg : args) {
             if (arg instanceof HttpServletRequest) {
@@ -31,7 +36,7 @@ public class OAuthGoogleAspect {
     }
 
     @Around("@annotation(oAuthGoogle)")
-    public void validateAccessToken(ProceedingJoinPoint joinPoint, OAuthGoogle oAuthGoogle) {
+    public Object validateAccessToken(ProceedingJoinPoint joinPoint, OAuthGoogle oAuthGoogle) {
         try {
             HttpServletRequest request = findHttpServletRequest(joinPoint.getArgs());
             String accessToken = request.getHeader("Authorization");
@@ -56,10 +61,12 @@ public class OAuthGoogleAspect {
             }
             reader.close();
 
-            System.out.println("Token Info Response: " + response.toString());
+            LOGGER.trace("OAuth Verification: " + response);
+            return joinPoint.proceed();
         } catch (Exception e) {
             throw new AccessTokenException("There was an error validating the access token: " + e.getMessage());
+        } catch (Throwable e) {
+            throw new AccessTokenException("Join Point exception: " + e.getMessage());
         }
-
     }
 }

@@ -16,6 +16,7 @@ repositories {
 }
 
 dependencies {
+    implementation group: 'com.rabbitmq', name: 'amqp-client', version: '5.20.0'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.aspectj:aspectjrt:1.9.21.1'
     implementation 'com.google.api-client:google-api-client:1.32.1'
