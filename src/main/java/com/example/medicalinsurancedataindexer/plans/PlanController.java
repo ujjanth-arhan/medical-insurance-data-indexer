@@ -23,7 +23,7 @@ public class PlanController {
         this.planService = new PlanService();
     }
 
-//    @OAuthGoogle
+    @OAuthGoogle
     @GetMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> get(HttpServletRequest request, @PathVariable(value = "id") String id) {
         LOGGER.trace("Getting plan with id: " + id);
@@ -45,9 +45,9 @@ public class PlanController {
 
     }
 
-//    @OAuthGoogle
+    @OAuthGoogle
     @GetMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<?> getAll() {
+    ResponseEntity<?> getAll(HttpServletRequest request) {
         LOGGER.trace("Get all plans");
 
         List<Object> plans = planService.getAllPlans();
@@ -57,7 +57,7 @@ public class PlanController {
                 .body(plans);
     }
 
-//    @OAuthGoogle
+    @OAuthGoogle
     @PostMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> post(HttpServletRequest request, @RequestBody String rawPlan) {
         LOGGER.trace("Creating plan: " + rawPlan);
@@ -70,9 +70,9 @@ public class PlanController {
                 .body(plan);
     }
 
-//    @OAuthGoogle
+    @OAuthGoogle
     @DeleteMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<?> delete(@PathVariable(value = "id") String id) {
+    ResponseEntity<?> delete(HttpServletRequest request, @PathVariable(value = "id") String id) {
         LOGGER.trace("Deleting plan with id: " + id);
 
         planService.deletePlan(id);
@@ -90,9 +90,9 @@ public class PlanController {
      * @param rawPlan
      * @return
      */
-//    @OAuthGoogle
+    @OAuthGoogle
     @PutMapping(path = "/plan", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<?> put(@RequestBody String rawPlan) {
+    ResponseEntity<?> put(HttpServletRequest request, @RequestBody String rawPlan) {
         LOGGER.trace("Creating/Replacing plan");
 
         String plan = planService.putPlan(rawPlan);
@@ -103,7 +103,7 @@ public class PlanController {
                 .body(plan);
     }
 
-//    @OAuthGoogle
+    @OAuthGoogle
     @PatchMapping(path = "/plan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<?> patch(HttpServletRequest request, @PathVariable(value = "id") String id, @RequestBody String rawPlan) {
         LOGGER.trace("Patching plan with id: " + id);
